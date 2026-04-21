@@ -122,15 +122,22 @@ Skip packages that are already at the latest version.
 
 #### Interactive mode (default when running in a terminal with a user present)
 
-For each package that has at least one update available, display a prompt:
+Process each package that has at least one update available **strictly one at a time**,
+in sequence. Do **not** collect all packages and present them together — present one,
+wait for the answer, then move on to the next.
+
+For each package, display a single prompt and wait for the user's reply before proceeding:
 
 ```
 📦 react  |  current: ^18.2.0  |  available: patch → 18.2.1  |  minor → 18.3.0  |  major → 19.1.0
   Pick update type [patch / minor / major / skip]:
 ```
 
-Only show options that are actually available. Accept the user's input before moving to the
-next package.
+Rules for the prompt:
+- Only list update types that are actually available for that package.
+- Record the user's choice before displaying the next package.
+- If the user answers "skip", leave the package unchanged and move on.
+- Do not ask about the next package until the current one is answered.
 
 #### Non-interactive mode (autopilot / CI / no TTY)
 
