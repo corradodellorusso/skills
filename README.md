@@ -30,6 +30,22 @@ Skills are designed to be:
 
 ---
 
+### 💬 [`github-pr-assess-comments`](./github-pr-assess-comments/SKILL.md)
+
+> Fetches all unresolved review comments on the PR for the current branch, assesses their validity, proposes a fix for each, and prints a summary table.
+
+**When to use:** Ask your agent to *"assess PR comments"*, *"triage review feedback"*, or *"summarise outstanding review threads"*.
+
+**What it does:**
+- Guards against running when no open PR exists for the current branch
+- Fetches all unresolved review threads via the GitHub GraphQL API
+- Gathers file and diff context for each commented line
+- Classifies every comment as `✅ Valid`, `⚠️ Debatable`, or `❌ Invalid`
+- Produces a concrete fix proposal for each comment
+- Renders a Markdown summary table with author, file/line, validity, and proposed fix
+
+---
+
 ## 🚀 Adding a new skill
 
 1. Create a folder with a short, kebab-case name (e.g. `my-skill/`)
