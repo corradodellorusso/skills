@@ -46,6 +46,22 @@ Skills are designed to be:
 
 ---
 
+### 🧶 [`yarn-catalog-update`](./yarn-catalog-update/SKILL.md)
+
+> Checks all dependencies in the Yarn Catalog for available updates, lets the user pick the target version interactively (or auto-selects the latest minor in non-interactive mode), rewrites the catalog, and prints a change summary.
+
+**When to use:** Ask your agent to *"update the yarn catalog"*, *"bump my dependencies"*, or *"check for outdated packages"*.
+
+**What it does:**
+- Guards against non-Yarn repositories and repos without a `catalog:` or `catalogs:` block in `.yarnrc.yml`
+- Queries the npm registry for the latest patch, minor, and major versions of each catalog entry
+- In **interactive mode**: prompts per-package for the desired update type (patch / minor / major / skip)
+- In **non-interactive mode**: auto-selects the latest minor and reports available majors at the end
+- Rewrites `.yarnrc.yml` atomically, preserving the original range prefix (`^`, `~`, exact)
+- Prints a Markdown change table and reminds the user to run `yarn install`
+
+---
+
 ## 🚀 Adding a new skill
 
 1. Create a folder with a short, kebab-case name (e.g. `my-skill/`)
