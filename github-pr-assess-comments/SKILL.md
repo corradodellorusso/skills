@@ -1,17 +1,19 @@
 ---
 name: github-pr-assess-comments
-description: Fetches all unresolved review comments on the PR for the current branch, assesses their validity, proposes a fix for each, and prints a summary table.
+description: Fetches all unresolved review comments on the PR for the current branch, assesses their validity, and prints a summary table. Comments are never fixed — only assessed.
 ---
 
 # github-pr-assess-comments
 
-Analyses every unresolved review thread on the Pull Request associated with the current branch. For each comment it evaluates whether the feedback is valid and produces a concrete fix proposal, then renders a summary table.
+Analyses every unresolved review thread on the Pull Request associated with the current branch. For each comment it evaluates whether the feedback is valid and renders a summary table.
+
+> **Important:** This skill **only assesses** comments. It never applies fixes, edits files, or resolves threads — not even for short or trivial changes.
 
 ## When to use
 
 - When the user asks to review, triage, or assess PR comments / review feedback
-- When the user wants a summary of outstanding review threads and suggested fixes
-- When the user wants to know what reviewers said and how to address it
+- When the user wants a summary of outstanding review threads
+- When the user wants to know what reviewers said
 
 ## Instructions
 
@@ -91,7 +93,9 @@ Also fetch the PR diff to understand what changed:
 gh pr diff "$PR_NUMBER"
 ```
 
-### 5. Assess each comment and propose a fix
+### 5. Assess each comment
+
+> **Never apply any fix.** Do not edit files, do not resolve threads, and do not make code changes — regardless of how short or trivial the fix might seem.
 
 For every unresolved comment, perform the following analysis using the comment body, the file context, and the PR diff:
 
@@ -100,17 +104,17 @@ For every unresolved comment, perform the following analysis using the comment b
 - `⚠️ Debatable` — the feedback is a matter of preference or opinion; a reasonable engineer could disagree
 - `❌ Invalid` — the feedback is factually incorrect, already addressed, or not applicable to the changed code
 
-**Fix proposal** — for each comment, produce a short, concrete action. Examples:
-- For `✅ Valid`: a specific code change, refactor, or addition (inline snippet if short enough)
-- For `⚠️ Debatable`: explain the trade-off and suggest a response or minor accommodation
-- For `❌ Invalid`: suggest replying with a short explanation of why the comment does not apply
+**Suggested action** — for each comment, describe what *should* be done without doing it. Examples:
+- For `✅ Valid`: describe the specific code change, refactor, or addition that would address the feedback
+- For `⚠️ Debatable`: explain the trade-off and suggest a response the author could leave
+- For `❌ Invalid`: suggest a reply explaining why the comment does not apply
 
 ### 6. Render the summary table
 
 Print the results as a Markdown table with the following columns:
 
-| # | File & Line | Author | Comment (excerpt) | Validity | Proposed Fix |
-|---|-------------|--------|-------------------|----------|--------------|
+| # | File & Line | Author | Comment (excerpt) | Validity | Suggested Action |
+|---|-------------|--------|-------------------|----------|------------------|
 
 Rules for the table:
 - **#** — sequential index (1-based)
@@ -118,12 +122,13 @@ Rules for the table:
 - **Author** — GitHub login of the comment author
 - **Comment (excerpt)** — first 80 characters of the comment body, truncated with `…` if longer
 - **Validity** — one of `✅ Valid`, `⚠️ Debatable`, or `❌ Invalid`
-- **Proposed Fix** — concise action (≤120 chars); longer proposals go in a numbered list below the table, referenced by index
+- **Suggested Action** — concise description of what to do (≤120 chars); longer descriptions go in a numbered list below the table, referenced by index
 
-After the table, include a **Detail** section that expands every entry whose proposed fix exceeded 120 characters, numbered to match the table index.
+After the table, include a **Detail** section that expands every entry whose suggested action exceeded 120 characters, numbered to match the table index.
 
 ## Key constraints
 
+- **Never apply fixes.** Do not edit any file, resolve any thread, or make any code change — regardless of how trivial the fix appears.
 - All GitHub operations MUST use the `gh` CLI — no direct API calls with `curl` unless `gh api` is used.
 - Never fabricate comments or code that are not retrieved from the API.
 - Keep assessment objective: base validity on correctness, clarity, and relevance to the diff — not on personal style preferences unless a linter/style guide is referenced.
