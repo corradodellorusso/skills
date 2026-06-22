@@ -68,6 +68,12 @@ Using the commits, diff, and template (if present), generate a high-quality PR d
 - Fills in every section of the PR template (if one exists), replacing placeholder text with real content derived from the changes
 - Does **not** invent changes that are not present in the diff
 
+When generating the title, inspect the commits for [Conventional Commits](https://www.conventionalcommits.org/) prefixes (`feat`, `fix`, `chore`, `refactor`, `docs`, `test`, `perf`, `ci`, `build`, `style`, `revert`). Derive the title prefix using this logic:
+- If all commits share the same type (and optionally the same scope), use `<type>(<scope>): <summary>` — e.g. `feat(auth): add OAuth2 login flow`.
+- If commits share the same type but different scopes, omit the scope: `<type>: <summary>`.
+- If commits span multiple types, use the **highest-priority** type present. Priority order (highest first): `fix` > `feat` > `perf` > `refactor` > `chore` > `docs` > `test` > `ci` > `build` > `style`.
+- If no commit follows the Conventional Commits format, omit the prefix entirely and write a plain imperative title.
+
 Create the PR:
 
 ```bash
@@ -81,7 +87,7 @@ Report the URL returned by `gh pr create` to the user.
 
 ### 6. Update the description of an existing PR
 
-Generate a fresh description using the same approach as step 5 (commits, diff, template).
+Generate a fresh description using the same approach as step 5 (commits, diff, template), including re-deriving the semantic title prefix from the current commit list.
 
 Update the PR:
 
@@ -98,6 +104,7 @@ Tell the user the PR was updated and show the URL.
 - Always base the description on the **committed** diff only (step 2). Never guess or fabricate changes.
 - If a PR template exists, treat each section header as a required field and fill it from the diff. Do not remove template sections.
 - Keep the title short (≤72 chars), imperative mood, no trailing period.
+- Preserve Conventional Commits semantics in the title: derive the `<type>(<scope>):` prefix from the commits as described in step 5. Never invent a type that is not present in at least one commit.
 - The body should be written in clear, plain English suitable for a code review audience.
 - Never expose secrets, credentials, or PII found in the diff.
 
