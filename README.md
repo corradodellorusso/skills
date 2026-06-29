@@ -62,6 +62,21 @@ Skills are designed to be:
 
 ---
 
+### 🌳 [`graphql-ast-visitors`](./graphql-ast-visitors/SKILL.md)
+
+> Step-by-step guide for mastering GraphQL AST Visitors with plain graphql-js — visitor patterns, schema traversal, and operation document traversal.
+
+**When to use:** Ask your agent to *"write a GraphQL AST visitor"*, *"review this visitor"*, *"traverse a GraphQL schema"*, or *"extract fields from an operation"*.
+
+**What it does:**
+- Shows how to get an AST from both a schema (SDL or compiled `GraphQLSchema`) and an operation document
+- Covers all visitor patterns (KindVisitor, enter/leave, generic, reducer, `visitInParallel`)
+- Provides Kind → Node type reference tables for schema and operation nodes
+- Includes practical examples (collect fields, rewrite nodes, early exit, skip subtrees)
+- Includes a review checklist for validating existing visitors
+
+---
+
 ## 🚀 Adding a new skill
 
 1. Create a folder with a short, kebab-case name (e.g. `my-skill/`)
