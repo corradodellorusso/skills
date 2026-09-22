@@ -77,6 +77,24 @@ Skills are designed to be:
 
 ---
 
+### 🧹 [`code-comments-cleanup`](./code-comments-cleanup/SKILL.md)
+
+> Reviews every comment and TSDoc/JSDoc block in the files changed on the current branch and rewrites, tightens, or deletes the ones that carry no value.
+
+**When to use:** Ask your agent to *"clean up the comments"*, *"review the docs on this branch"*, or *"remove the AI slop comments"* — typically as a final pass before opening a PR.
+
+**What it does:**
+- Collects every file changed against the base branch (committed, staged, working tree and untracked)
+- Skips generated output, snapshots, vendored code, lockfiles and comment-asserting fixtures
+- Reviews **all** comments in those files, judging each one against the code it documents
+- Rewrites verbose docs, strips consumer lists, plan narration and conversation residue
+- Deletes comments that only restate the code, instead of shrinking them
+- Leaves linter/compiler directives, type-carrying JSDoc, pragmas and licence headers untouched
+- Proves the pass was comment-only and runs the project typecheck before reporting
+- Prints a change table, the full text of every deletion, and symbols worth documenting
+
+---
+
 ## 🚀 Adding a new skill
 
 1. Create a folder with a short, kebab-case name (e.g. `my-skill/`)
