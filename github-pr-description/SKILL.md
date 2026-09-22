@@ -64,7 +64,7 @@ PR_URL=$(gh pr list --head "$CURRENT_BRANCH" --json url --jq '.[0].url')
 ### 5. Generate the PR description and create the PR
 
 Using the commits, diff, and template (if present), generate a high-quality PR description that:
-- Starts with a concise summary of what changed and why
+- **Opens with a high-level summary (TL;DR)** — see [TL;DR (required)](#tldr-required) for its shape and placement
 - Fills in every section of the PR template (if one exists), replacing placeholder text with real content derived from the changes
 - Does **not** invent changes that are not present in the diff
 
@@ -87,7 +87,7 @@ Report the URL returned by `gh pr create` to the user.
 
 ### 6. Update the description of an existing PR
 
-Generate a fresh description using the same approach as step 5 (commits, diff, template), including re-deriving the semantic title prefix from the current commit list.
+Generate a fresh description using the same approach as step 5 (commits, diff, template), including the required TL;DR and re-deriving the semantic title prefix from the current commit list.
 
 Update the PR:
 
@@ -99,10 +99,38 @@ gh pr edit "$PR_URL" \
 
 Tell the user the PR was updated and show the URL.
 
+## TL;DR (required)
+
+Every PR description MUST open with a high-level summary of what the PR is mainly about, so a
+reviewer can grasp it at a glance before reading any detail.
+
+### Shape
+
+- 1–3 sentences, or at most 3 bullets.
+- Answers two things: **what** changes, and **why** it matters.
+- No file-by-file breakdown, no implementation detail, no restating the detailed sections verbatim.
+  (This limit applies to the summary itself — not to the section that hosts it, which still carries its full detail.)
+- Written for someone who has not read the ticket or the diff.
+
+### Placement
+
+The heading label is not fixed — `TL;DR`, `Summary`, or whatever vocabulary the template already
+uses. What matters is that the summary comes **first**. Decide where it goes using the first rule
+that matches:
+
+1. **The template already has a summary-like section** (`Summary`, `Overview`, `Description`,
+   `What`, `What & Why`, `Context`, `Motivation`, or similar) → the TL;DR becomes the first content
+   of that section, and the section's detailed content follows it as subsequent paragraphs under the
+   same heading. Do not add a second heading, and do not drop the detail in favour of the summary.
+2. **The template exists but every section is a specific** (ticket link, checklist, testing notes,
+   screenshots, risk, rollout) → place the TL;DR **above** the template body, as a short un-headed
+   lead paragraph or under an explicit `## TL;DR` heading. Leave every template section in place.
+3. **No template** → the body starts with the summary; a heading is optional.
+
 ## Description generation rules
 
 - Always base the description on the **committed** diff only (step 2). Never guess or fabricate changes.
-- If a PR template exists, treat each section header as a required field and fill it from the diff. Do not remove template sections.
+- If a PR template exists, treat each section header as a required field and fill it from the diff. Never remove, rename, or repurpose template sections — but you **may add** a leading summary section when the template offers no home for the TL;DR.
 - Keep the title short (≤72 chars), imperative mood, no trailing period.
 - Preserve Conventional Commits semantics in the title: derive the `<type>(<scope>):` prefix from the commits as described in step 5. Never invent a type that is not present in at least one commit.
 - The body should be written in clear, plain English suitable for a code review audience.
@@ -111,6 +139,7 @@ Tell the user the PR was updated and show the URL.
 ## Key constraints
 
 - All GitHub operations MUST use the `gh` CLI — no direct API calls.
+- The description MUST always lead with a high-level summary (see [TL;DR (required)](#tldr-required)), whatever the template looks like.
 - Never run on the default branch (enforced in step 1).
 - Only analyse **committed** changes (`git diff origin/<default>..HEAD`), not the working tree or staging area.
 - If `gh` is not installed or not authenticated, stop and tell the user to install/authenticate it first.

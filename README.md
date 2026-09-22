@@ -25,6 +25,7 @@ Skills are designed to be:
 - Guards against running on the default branch
 - Analyses only **committed** changes (never the working tree)
 - Detects and fills in an existing `.github/PULL_REQUEST_TEMPLATE.md`
+- Always opens the description with a high-level TL;DR summary, placed to fit the template
 - Creates a new PR or updates an existing one via the `gh` CLI
 - Generates a concise, accurate title and body — no hallucinated changes
 
