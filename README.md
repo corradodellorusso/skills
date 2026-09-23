@@ -88,6 +88,7 @@ Skills are designed to be:
 - Collects every file changed against the base branch (committed, staged, working tree and untracked)
 - Skips generated output, snapshots, vendored code, lockfiles and comment-asserting fixtures
 - Reviews **all** comments in those files, judging each one against the code it documents
+- Preserves — and only polishes — comments recording a *why* the code cannot show: business rules, library bugs, incidents
 - Rewrites verbose docs, strips consumer lists, plan narration and conversation residue
 - Deletes comments that only restate the code, instead of shrinking them
 - Leaves linter/compiler directives, type-carrying JSDoc, pragmas and licence headers untouched

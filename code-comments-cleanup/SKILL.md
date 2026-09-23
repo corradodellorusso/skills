@@ -100,13 +100,17 @@ value is a statement about the code below it, not about the sentence itself.
 Apply the [rewriting rules](#rewriting-rules) below, in order:
 
 1. Is it a [protected comment](#comments-that-must-never-be-touched)? → **KEEP**, untouched, byte for byte.
-2. Does it state something a competent reader cannot get from the code in two seconds? If no → **DELETE**.
-3. Does it violate a rule but still carry a real fact (a constraint, a failure mode, a reason)? →
+2. Does it record a *why* that lives outside the code (R1)? → **KEEP**, or **REWRITE** when padded.
+   This branch has no **DELETE**.
+3. Does it state something a competent reader cannot get from the code in two seconds? If no → **DELETE**.
+4. Does it violate a rule but still carry a real fact (a constraint, a failure mode, a reason)? →
    **REWRITE**, keeping the fact and dropping everything else.
-4. Otherwise → **KEEP**.
+5. Otherwise → **KEEP**.
 
 When torn between REWRITE and DELETE for a comment that holds one genuine fact, rewrite it down to
 that fact. When torn between KEEP and DELETE, and the comment only paraphrases the code, delete it.
+When torn over whether something counts as rationale, treat it as rationale and keep it — a redundant
+line costs a reader two seconds, a lost constraint costs the next person a regression.
 
 ### 5. Apply the edits
 
@@ -148,11 +152,14 @@ Print a Markdown table of changes only (unchanged comments are not listed):
 |---|-------------|--------|--------|--------|
 | 1 | `src/cart.ts:42` | `applyDiscount` | ✍️ Rewritten | Listed callers and restated the signature |
 | 2 | `src/cart.ts:88` | `toCents` | ✂️ Deleted | Restated a one-line conversion |
+| 3 | `src/pay.ts:17` | `roundAmount` | ✍️ Rewritten | Kept the Stripe rounding constraint, dropped the narration |
 
 Then add:
 
 - **Deleted comments** — the full original text of every deletion, so the reviewer can eyeball what
   is gone without reading the diff.
+- **Rewritten rationale** — for every R1 comment you tightened, the original text next to the new one,
+  so the reviewer can confirm the polish cost it nothing.
 - **Candidates for documentation** — symbols with non-obvious failure modes, ordering constraints or
   side effects that currently have *no* doc. List them; do not write the docs (see
   [Do not author new documentation](#do-not-author-new-documentation)).
@@ -160,7 +167,50 @@ Then add:
 
 ## Rewriting rules
 
-### R1 — Short, plain, direct
+### R1 — Preserve the *why*
+
+The one thing code cannot say for itself is *why* it is written this way. When a comment records a
+cause that lives **outside the file**, it is likely the most valuable line in it: keep it, or tighten
+it, but never delete it.
+
+Rationale comments record things like:
+
+- a business, product, legal or contractual rule (pricing tiers, retention windows, tax rounding)
+- a bug, quirk or breaking change in a library, browser, runtime or vendor API
+- a measured performance finding, and what was tried before it
+- a compatibility or migration constraint imposed by another system
+- an incident or postmortem that produced the current shape of the code
+- a deliberate deviation from the approach a reader would otherwise reach for
+
+The test: **would someone refactoring this plausibly break something because they did not know it?**
+If yes the comment stays — even when it sits above code that looks trivial, and even when its claim
+cannot be checked anywhere in this repository.
+
+```ts
+// ✅ KEEP — a vendor quirk no reading of the code reveals
+// Stripe rounds amounts down at 2 decimals; rounding up here overcharges by a cent. (PAY-1182)
+
+// ✅ KEEP — a legal constraint, not a technical one
+// Retained 7 years for tax audits; do not shorten without Legal sign-off.
+
+// ✅ KEEP — a library bug, pinned to the version that has it
+// lodash 4.17.20 mutates the source in `mergeWith`; clone until we are off 4.x. (lodash#5111)
+
+// ✍️ REWRITE — the fact survives, the narration goes
+// ❌ I first tried Promise.all here as suggested, but the API started returning 429s, so in the
+//    end I had to make it sequential instead.
+// ✅ Sequential by necessity: the vendor API rate-limits concurrent writes with 429s.
+```
+
+**Polishing a rationale comment never costs it a fact.** Keep every identifier that gives a reader a
+trail to follow — ticket keys, issue and CVE numbers, URLs, library versions, dates, RFC references.
+They look like ceremony; they are the way back to the full story.
+
+**Suspected-stale rationale is kept, not deleted.** A comment citing a bug that may since have been
+fixed, or a rule that may have changed, cannot be confirmed from the code. Leave it in place and list
+it in the summary for a human to retire.
+
+### R2 — Short, plain, direct
 
 A comment nobody reads is worth nothing, and length is the main reason comments go unread. One or two
 lines. No preamble, no ceremony, no restating the signature in prose.
@@ -177,7 +227,7 @@ lines. No preamble, no ceremony, no restating the signature in prose.
 /** Loads a user by id. Returns `null` when the row is missing. */
 ```
 
-### R2 — Never mention consumers
+### R3 — Never mention consumers
 
 Callers change; the comment does not. Document what the symbol *is*, never who happens to use it today.
 
@@ -189,11 +239,15 @@ Callers change; the comment does not. Document what the symbol *is*, never who h
 /** Formats a price in the currency's minor units, rounding half up. */
 ```
 
-### R3 — No plan or agreement provenance
+### R4 — No plan or agreement provenance
 
-A comment must stand on its own for a reader who knows nothing of the work that produced it. Strip
-every reference to steps, phases, migrations-in-progress and "for now" scaffolding that only made
-sense inside a plan.
+A comment must stand on its own for a reader who knows nothing of the work that produced it. Strip the
+*provenance* — which step, whose plan, which phase, what an agent was told to do — along with the "for
+now" scaffolding that only made sense inside that plan.
+
+What survives is the constraint underneath. A migration genuinely in flight, and the condition that
+ends it, is rationale (R1): it stays, stated as a fact about the system rather than as a position in a
+plan. Strip the plan, keep the constraint.
 
 ```ts
 // ❌
@@ -205,7 +259,7 @@ sense inside a plan.
 // ✅  (…or, if it says nothing durable, delete the comment)
 ```
 
-### R4 — No conversation residue
+### R5 — No conversation residue
 
 Nothing from the exchange with the user belongs in the source: no "as the user asked", "as requested",
 "the user explicitly wanted this", no hedging about who is to blame for a decision, and no passive
@@ -224,7 +278,7 @@ aggression.
 A decision that looks wrong at first glance may still deserve a line — but that line explains the
 *engineering* reason, never the negotiation.
 
-### R5 — Document the non-obvious, not the obvious
+### R6 — Document the non-obvious, not the obvious
 
 A trivial symbol needs no doc. Where a symbol *does* deserve one, spend the words on what reading the
 happy path will not reveal: thrown errors, `null`/`undefined` results, mutation of arguments, ordering
@@ -244,10 +298,11 @@ function add(a: number, b: number) { return a + b; }
 /** Throws `ConfigError` on malformed YAML; a missing file yields the defaults. */
 ```
 
-### R6 — No value → delete, don't shrink
+### R7 — No value → delete, don't shrink
 
 Shrinking a worthless comment leaves a shorter worthless comment. If a comment survives only because
-deleting things feels rude, delete it.
+deleting things feels rude, delete it. This rule never reaches a rationale comment (R1): one that
+records a *why* has value by definition.
 
 ```ts
 // ❌
@@ -288,12 +343,12 @@ a comment**.
 - Editor folding markers: `//#region`, `//#endregion`
 - Localisation/extraction comments consumed by a toolchain (e.g. `// i18n-extract`, `/* i18n: … */`)
 
-A `@deprecated` or `@example` block may still have its **prose** tightened under R1; the tag itself stays.
+A `@deprecated` or `@example` block may still have its **prose** tightened under R2; the tag itself stays.
 
 Beyond directives, some short comments look like slop and are not. Keep them:
 
 ```ts
-// ✅ KEEP — records a non-obvious workaround with a trail to follow
+// ✅ KEEP — records a non-obvious workaround with a trail to follow (R1)
 // Safari 17 fires `resize` before layout settles; the rAF hop avoids a 0-height read. (WK-243081)
 
 // ✅ KEEP — a real ordering constraint the code cannot express
@@ -320,8 +375,12 @@ attention go in the summary as candidates, for the user to decide.
 - **Never reorder or move comments** — directive comments bind to the line below them.
 - Never touch the protected comments listed above, generated files, snapshots, or fixtures whose
   comment text is asserted by tests.
-- Never invent a fact. If a comment claims something you cannot confirm in the code, drop the claim —
-  do not rewrite it into a new, equally unverified claim.
+- Never invent a fact. If a comment makes a claim **about this code's behaviour** that the code
+  contradicts, drop the claim — do not rewrite it into a new, equally unverified one. This does *not*
+  apply to rationale (R1): a claim about a vendor bug, a business rule or an incident is unverifiable
+  from the code by nature, and being unverifiable here is precisely why someone wrote it down. Keep it.
+- **Never delete a rationale comment** (R1). It may be tightened; the reason it records must survive
+  the edit intact, identifiers included.
 - Prefer deletion over decoration: fewer, sharper comments is the goal, not uniformly documented code.
 - Keep the file's existing language and comment style; do not translate or convert `//` blocks into
   doc blocks.
